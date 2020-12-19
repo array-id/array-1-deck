@@ -5,6 +5,7 @@ import { ModeProvider } from '../context/ModeContext'
 import MDXProvider from '../components/MDXProvider'
 import { ThemeProvider } from '../components/ThemeProvider'
 import TransitionPage from '../layouts/TransitionPage'
+import '../public/tailwind.css'
 import '../styles/globals.css'
 
 export default ({ Component, pageProps }) => (
