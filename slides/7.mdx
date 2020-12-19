@@ -1,0 +1,490 @@
+<SlidePage>
+
+# Facade!
+
+```php
+Avatar::getAvatarUrl('itskodinger');
+```
+
+---
+
+# 3 Komponen Facade
+
+1. Accessor
+1. Service Provider
+1. Implementation
+
+---
+
+# 1. Accessor
+
+Accessor bertugas sebagai Proxy, antara Service Container & Implementation.
+
+```php
+...
+
+class Avatar extends Facade {
+
+    /**
+     * Return the container binding for this facade.
+     *
+     * @return string
+     */
+    protected static function getFacadeAccessor()
+    {
+        return 'avatar';
+    }
+}
+```
+
+---
+
+# Cara bikin Accessor
+
+```bash
+mkdir app/Facades
+```
+
+---
+
+```php{15,18}
+// app/Facades/Avatar.php
+
+<?php
+
+namespace App\Facades;
+
+use Illuminate\Support\Facades\Facade;
+
+class Avatar extends Facade {
+    /**
+     * Return the container binding for this facade.
+     *
+     * @return string
+     */
+    protected static function getFacadeAccessor()
+    {
+        return 'avatar';
+    }
+}
+```
+
+---
+
+## The getFacadeAccessor() Method
+
+getFacadeAccessor() bertugas buat nge-define key yang akan di binding ke Service Container.
+
+Untuk selanjutnya dijadikan reference ke real implementation oleh Service Provider.
+
+---
+
+# 2. Service Provider
+
+Bertugas untuk melakukan binding antara Accessor / Proxy dan real implementation ke Service Container.
+
+```bash
+php artisan make:provider AvatarDriverFacadeServiceProvider
+```
+
+---
+
+## Proxy Binding
+
+```php{4,4|15,15}
+// app/Providers/AvatarDriverFacadeServiceProvider.php
+.....
+
++ use App\Services\AvatarDriver\Facades\Avatar;
+
+class AvatarDriverFacadeServiceProvider extends ServiceProvider {
+
+    /**
+    * Register services.
+    *
+    * @return void
+    */
+    public function register()
+    {
+        $this->app->bind('avatar', Avatar::class);
+    }
+
+....
+```
+
+---
+
+## Real Implementation
+
+Tempat untuk menulis code facade yang aslinya.
+
+```bash
+mkdir app/Services/AvatarDriver/Facades
+```
+---
+
+```php
+// app/Services/AvatarDriver/Facades/Avatar.php
+
+<?php
+
+namespace App\Services\AvatarDriver\Facades;
+
+class Avatar {
+    //
+}
+
+```
+---
+
+## Import Registry
+
+```php{7,7}
+// app/Services/AvatarDriver/Facades/Avatar.php
+
+<?php
+
+namespace App\Services\AvatarDriver\Facades;
+
++ use App\Registries\AvatarDriverRegistry;
+
+class Avatar {
+    //
+}
+```
+
+---
+
+## Registry Dependency Injection
+
+```php
+.....
+
+class Avatar {
+
+    /**
+     * The AvatarDriverRegistry instance.
+     *
+     * @var  AvatarDriverRegistry $registry
+     */
+    protected $registry;
+
+.....
+```
+
+---
+
+```php
+    .....
+
+    /**
+     * Build the controller instance.
+     *
+     * @param  AvatarDriverRegistry $registry
+     * @return void
+     */
+    public function __construct(AvatarDriverRegistry $registry)
+    {
+        $this->registry = $registry;
+    }
+}
+```
+
+---
+
+## The provider() method.
+
+Untuk memilih provider yang akan di pakai di dalam Facade.
+
+```php{4,4|6,6|11,11|13,13}
+/**
+ * Set Avatar Provider.
+ *
+ * @param  string $provider
+ * @return self
+ * @throws ProviderNotFoundException
+ */
+public function provider($provider)
+{
+    if( ! $this->registry->has($provider) )
+        throw new ProviderNotFoundException($provider);
+
+    $this->provider = $this->registry->get($provider);
+
+    return $this;
+}
+
+```
+
+---
+
+# ProviderNotFoundException
+
+```bash
+php artisan make:exception ProviderNotFoundException
+```
+
+---
+
+```php
+// app/Exceptions/ProviderNotFoundException.php
+
+
+/**
+ * Build the Exception class.
+ *
+ * @param  string $provider
+ * @return Exception
+ */
+public function __construct($provider)
+{
+    return parent::__construct(
+        sprintf("Avatar Provider with key [%s] doesn't exists.", $provider)
+    );
+}
+
+
+```
+
+---
+
+## Import Exception Class
+
+```php{7,7}
+// app/Services/AvatarDriver/Facades/Avatar.php
+
+<?php
+
+namespace App\Services\AvatarDriver\Facades;
+
++ use App\Exceptions\ProviderNotFoundException;
+
+class Avatar {
+
+....
+
+```
+
+---
+
+## Property $provider
+
+```php{9,9}
+.....
+
+class Avatar {
+    .....
+
+    /**
+     * The AvatarDriver instance.
+     *
+     * @var  AvatarDriver $provider
+     */
+    protected $provider;
+
+.....
+```
+---
+
+## Import AvatarDriver interface.
+
+```php{7,7}
+// app/Services/AvatarDriver/Facades/Avatar.php
+
+<?php
+
+namespace App\Services\AvatarDriver\Facades;
+
++ use App\Contracts\AvatarDriver;
+
+class Avatar {
+
+....
+
+```
+---
+
+## The getAvatarUrl() method.
+
+Untuk mengambil avatar url dari Provider.
+
+```php{8,12|14,14}
+/**
+ * Get the avatar URL from the provider.
+ *
+ * @param  string $username
+ * @return string
+ */
+public function getAvatarUrl($username) {
+    if( ! $this->provider instanceof AvatarDriver ) {
+        $this->provider(
+            Arr::random(array_keys($this->registry->all()))
+        );
+    }
+
+    return $this->provider->getAvatarUrl($username);
+}
+```
+---
+
+# Register ServiceProvider
+
+```php
+// config/app.php
+
+'providers' => [
+    .....
+    App\Providers\AvatarDriverFacadeServiceProvider::class,
+]
+```
+---
+
+# Register Facade Alias
+
+```php
+// config/app.php
+
+'aliases' => [
+    .....
+    'Avatar' => App\Facades\Avatar::class,
+]
+```
+
+---
+
+# Test Facade
+
+```php
+Avatar::getAvatarUrl('itskodinger');
+
+// => https://pbs.twimg.com/profile_images/1194333351026417664/jywV-HaJ_normal.jpg
+```
+
+---
+
+# Ada Masalah!
+
+Kita gak bisa dapet provider reference nya!
+
+```php
+Avatar::getAvatarUrl('itskodinger');
+
+// => https://pbs.twimg.com/profile_images/1194333351026417664/jywV-HaJ_normal.jpg
+```
+
+getAvatarUrl() cuma return url nya aja, gak sama provider nya!
+
+---
+
+# Array Destructuring Solusinya!
+
+```php{7,7|11,15}
+/**
+ * Get the avatar url with the provider.
+ *
+ * @param  string $username
+ * @return array
+ */
+public function getAvatar($username, $provider = null) {
+    if( ! is_null($provider) )
+        $this->provider($provider);
+
+    return [
+        $this->getAvatarUrl($username),
+        $this->providerReference,
+        $this->provider
+    ];
+}
+
+```
+---
+
+# New Syntax
+
+```php
+[$avatarUrl, $providerReference, $provider] = Avatar::getAvatar();
+
+// $avatarUrl => https://pbs.twimg.com/profile_images/1194333351026417664/jywV-HaJ_normal.jpg
+// $providerReference => twitter
+// $provider => App\Services\AvatarDriver\TwitterDriver {#178}
+```
+
+---
+
+# Controller Refactoring!
+
+Kita perlu _adapt_ new syntax nya buat refactor controller nya.
+
+---
+## Hapus Dependency Injection nya!
+
+```php
+- /**
+-  * The AvatarDriverRegistry instance.
+-  *
+-  * @var  AvatarDriverRegistry $registry
+-  */
+- protected $registry;
+-
+- /**
+-  * Build the controller instance.
+-  *
+-  * @param  AvatarDriverRegistry $registry
+-  * @return void
+-  */
+- public function __construct(AvatarDriverRegistry $registry)
+- {
+-     $this->registry = $registry;
+- }
+```
+---
+
+# Update __invoke() Nya!
+
+---
+
+From This :
+```php
+public function __invoke(Request $request)
+{
+    if( ! $request->has('username') )
+        return response()->json(['message' => 'Please Provide Username.'], 400, [], JSON_PRETTY_PRINT);
+
+    $provider = $request->provider;
+
+    if( ! $this->registry->has($provider) )
+        $provider = Arr::random(array_keys($this->registry->all()));
+
+    $avatarUrl = $this->registry->get($provider)->getAvatarUrl($request->username);
+
+    return response()->json([
+        'avatar_url' => $avatarUrl,
+        'provider'   => $provider
+    ], 200, [], JSON_PRETTY_PRINT);
+}
+```
+
+---
+To This :
+```php
+public function __invoke(Request $request)
+{
+    if( ! $request->has('username') )
+        return response()->json(['message' => 'Please Provide Username.'], 400, [], JSON_PRETTY_PRINT);
+
+    $provider = $request->provider;
+
+    [ $avatarUrl, $providerReference, $provider ] = Avatar::getAvatar($request->username, $provider);
+
+    return response()->json([
+        'avatar_url' => $avatarUrl,
+        'provider'   => $providerReference
+    ], 200, [], JSON_PRETTY_PRINT);
+}
+```
+
+---
+
+# Lanjot mang~
+
+</SlidePage>

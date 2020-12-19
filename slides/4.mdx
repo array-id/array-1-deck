@@ -1,0 +1,210 @@
+<SlidePage>
+
+## AvatarDriver Generator
+
+Registry perlu implementasi dari AvatarDriver untuk bisa dipakai.
+
+```bash
+php artisan make:avatar-driver TwitterDriver
+```
+
+---
+
+## Stub Generator!
+
+Untuk bikin AvatarDriver boilerplate dari .stub file, Kita perlu install array-id/stub-generator,
+
+```bash
+composer require array-id/stub-generator
+```
+---
+
+
+Sama bikin command Artisan nya.
+
+```bash
+php artisan make:command AvatarDriverGenerator
+```
+
+---
+
+## AvatarDriver.stub Blueprint
+
+Buat grouping .stub file, buat folder Stubs di app.
+
+```bash
+mkdir app/Stubs
+```
+
+---
+
+app/Stubs/AvatarDriver.stub
+
+```php{7,7}
+<?php
+
+namespace App\Services\AvatarDriver;
+
+use App\Contracts\AvatarDriver;
+
+class :CLASS_NAME: implements AvatarDriver {
+    /**
+     * Retrieve avatar url from provider.
+     *
+     * @param  string $username
+     * @return string
+     */
+    public function getAvatarUrl($username) {
+      //
+    }
+}
+```
+
+---
+
+## AvatarDriverGenerator Implementation
+
+```php{5,5}
+<?php
+
+namespace App\Console\Commands;
+
++ use ArrayID\StubGenerator;
+use Illuminate\Console\Command;
+
+class AvatarDriverGenerator extends Command
+{
+  ....
+```
+
+---
+
+Tambah Argument className di Artisan command signature nya
+
+```php{10,10}
+// app/Console/Commands/AvatarDriverGenerator.php
+.....
+class AvatarDriverGenerator extends Command
+{
+    /**
+     * The name and signature of the console command.
+     *
+     * @var string
+     */
+    protected $signature = 'make:avatar-driver {className : The class name....}';
+.....
+```
+
+---
+
+## Implementasi handle() method
+
+```php{4,4|11,13}
+.....
+public function handle()
+{
+    $class = $this->argument('className'); // TwitterDriver
+
+    $stub = new StubGenerator(
+        app_path("Stubs/AvatarDriver.stub"),
+        app_path("Services/AvatarDriver/$class.php")
+    );
+
+    $stub->render([
+        ':CLASS_NAME:' => $class
+    ]);
+
+    $this->info(sprintf('AvatarDriver [%s] Generated Sucessfully.', $class));
+}
+```
+
+---
+
+## Generate AvatarDriver-nya!
+
+
+```bash
+php artisan make:avatar-driver TwitterDriver
+```
+
+![Make Avatar Driver](/images/make-avatar-driver.png)
+
+---
+
+```php{9,9}
+// app/Services/AvatarDriver/TwitterDriver.php
+
+<?php
+
+namespace App\Services\AvatarDriver;
+
+use App\Contracts\AvatarDriver;
+
+class TwitterDriver implements AvatarDriver {
+    /**
+     * Retrieve avatar url from provider.
+     *
+     * @param  string $username
+     * @return string
+     */
+    public function getAvatarUrl($username) {
+      //
+    }
+}
+```
+
+---
+
+## Driver Discovery
+
+Registry perlu untuk tahu lokasi AvatarDriver nya nih, biar nanti Driver nya bisa di register ke Registry.
+
+_Tapi gimana caranya?_
+
+---
+
+# Config File!
+
+```php
+// config/avatar-driver.php
+
+<?php
+
+return [
+    'twitter' => App\Services\AvatarDriver\TwitterDriver::class,
+];
+
+```
+
+---
+
+## Driver Auto-Discovery!
+
+```php
+// app/Providers/AvatarDriverServiceProvider
+....
+
+protected function discoverAvatarDrivers() {
+
+    $drivers = config('avatar-driver');
+
+    if( ! is_array($drivers) ) return;
+
+    foreach($drivers as $key => $driverNamespace) {
+        $this->app->make(AvatarDriverRegistry::class)->register(
+            $key, app($driverNamespace)
+        );
+    }
+
+}
+
+
+```
+---
+
+# Registry Completed Comrade!
+
+![](https://i.giphy.com/media/QMoXJjGPsmJ6Pdc596/source.gif)
+
+
+</SlidePage>

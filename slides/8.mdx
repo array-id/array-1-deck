@@ -1,0 +1,491 @@
+<SlidePage>
+
+# Implementasi Pipeline!
+
+```php
+app(Pipeline::class)
+    ->send($avatarRequest)
+    ->through([
+        ServeCachedAvatar::class,
+        ServeLiveAvatar::class,
+        ResizeAvatar::class
+    ])
+    ->thenReturn();
+```
+
+---
+
+# Pipeline itu apa sih?
+
+Pipeline itu cuman sekumpulan _tasks_ yang perlu di _run_ untuk mem-proses instance/passable.
+
+```php
+public function handle($passable, Closure $next) {
+    return $next($passable);
+}
+```
+
+---
+
+# Real-Live Implementation.
+
+Laravel Middleware!
+
+```php
+protected function sendRequestThroughRouter($request) {
+    $this->app->instance('request', $request);
+
+    Facade::clearResolvedInstance('request');
+
+    $this->bootstrap();
+
+    return (new Pipeline($this->app))
+                ->send($request)
+                ->through($this->app->shouldSkipMiddleware() ? [] : $this->middleware)
+                ->then($this->dispatchToRouter());
+}
+```
+
+---
+
+# Say Hi! to AvatarRequest Passable
+
+```php
+<?php
+
+namespace App\Contracts;
+
+use App\Contracts\AvatarDriver;
+
+interface AvatarRequest {
+    //
+}
+```
+
+---
+
+## Method set & get provider.
+
+```php
+
+/**
+ * Set avatar provider.
+ *
+ * @param  AvatarDriver $provider
+ * @return self
+ */
+public function setProvider(AvatarDriver $provider);
+
+/**
+ * Get avatar provider.
+ *
+ * @return AvatarDriver|null
+ */
+public function getProvider();
+```
+
+---
+
+## Method set & get username.
+
+```php
+/**
+ * Set username.
+ *
+ * @param  string $username
+ * @return self
+ */
+public function setUsername($username);
+
+/**
+ * Get username.
+ *
+ * @return string|null
+ */
+public function getUsername();
+```
+---
+
+## Method set & get avatar url.
+
+```php
+/**
+ * Set the avatar url.
+ *
+ * @param  string $url
+ * @return self
+ */
+public function setAvatarUrl($url);
+
+/**
+ * Get the avatar url.
+ *
+ * @return self
+ */
+public function getAvatarUrl();
+```
+
+---
+
+## Method set & get cached avatar url.
+
+```php
+/**
+ * Set the cached avatar url.
+ *
+ * @param  string $url
+ * @return self
+ */
+public function setCachedAvatarUrl($url);
+
+/**
+ * Get cached avatar url.
+ *
+ * @return string|null
+ */
+public function getCachedAvatarUrl();
+```
+
+---
+
+## Cached Avatar Url check.
+
+```php
+/**
+ * Determine if the cached avatar url exists.
+ *
+ * @return bool
+ */
+public function isAvatarUrlCached();
+```
+
+---
+
+# AvatarRequest Implementation!
+
+```php
+<?php
+
+namespace App\Services\AvatarDriver;
+
+use App\Contracts\AvatarDriver;
+use App\Contracts\AvatarRequest as AvatarRequestContract;
+
+class AvatarRequest implements AvatarRequestContract {
+    //
+}
+```
+
+---
+
+# Interface Binding
+
+```php
+// app/Providers/AvatarServiceProvider.php
+
+$this->app->bind(
+    AvatarRequestContract::class,
+    AvatarRequest::class
+);
+```
+
+---
+
+# Test Resolving
+
+```bash
+$ php artisan tinker
+
+Psy Shell v0.10.5 (PHP 7.4.12 — cli) by Justin Hileman
+>>> use App\Contracts\AvatarRequest;
+>>> app(AvatarRequest::class)
+=> App\Services\AvatarDriver\AvatarRequest {#3366}
+```
+
+---
+
+# Avatar Pipeline Generator
+
+```bash
+php artisan make:command AvatarPipelineGenerator
+```
+
+---
+
+## AvatarPipeline.stub
+
+```php{6,6|10,10}
+<?php
+
+namespace App\Services\AvatarDriver\Pipeline;
+
+use Closure;
+use App\Contracts\AvatarRequest;
+
+class :CLASS_NAME: {
+
+     public function handle(AvatarRequest $avatarRequest, Closure $next) {
+        return $next($avatarRequest);
+    }
+
+}
+```
+
+---
+
+## AvatarPipelineGenerator
+
+```php{5,5}
+<?php
+
+namespace App\Console\Commands;
+
++ use ArrayID\StubGenerator;
+use Illuminate\Console\Command;
+
+class AvatarPipelineGenerator extends Command
+{
+.....
+```
+
+---
+
+```php
+// app/Console/Commands/AvatarPipelineGenerator.php
+
+/**
+ * The name and signature of the console command.
+ *
+ * @var string
+ */
+protected $signature = 'make:avatar-pipeline {className : The new AvataPipeline class.}';
+```
+
+---
+
+```php{3,3|10,12}
+public function handle()
+{
+    $class = $this->argument('className');
+
+    $stub = new StubGenerator(
+        app_path("Stubs/AvatarPipeline.stub"),
+        app_path("Services/AvatarDriver/Pipeline/$class.php")
+    );
+
+    $stub->render([
+        ':CLASS_NAME:' => $class
+    ]);
+
+    $this->info(sprintf('AvatarPipeline [%s] Generated Sucessfully.', $class));
+}
+```
+---
+
+# ServeCachedAvatar Pipeline
+
+```bash
+php artisan make:avatar-pipeline ServeCachedAvatar
+```
+
+![](/images/serve-cached-avatar-pipeline.png)
+
+---
+
+```php{8,8}
+<?php
+
+namespace App\Services\AvatarDriver\Pipeline;
+
+use Closure;
+use App\Contracts\AvatarRequest;
+
+class ServeCachedAvatar {
+
+    public function handle(AvatarRequest $avatarRequest, Closure $next) {
+        return $next($avatarRequest);
+    }
+
+}
+```
+---
+
+## Implementasi ServeCachedAvatar Pipe
+
+Import Cache Facade.
+
+```php{7,7}
+<?php
+
+namespace App\Services\AvatarDriver\Pipeline;
+
+use Closure;
+use App\Contracts\AvatarRequest;
++ use Illuminate\Support\Facades\Cache;
+
+class ServeCachedAvatar {
+
+.....
+
+```
+---
+
+```php{3,5|10,11}
+public function handle(AvatarRequest $avatarRequest, Closure $next) {
+
+    $cachedAvatarKey = md5(
+        sprintf("%s.%s", get_class($avatarRequest->getProvider()), $avatarRequest->getUsername())
+    );
+
+    if( ! $avatarRequest->isAvatarUrlCached() ) {
+
+        if( Cache::has($cachedAvatarKey) ) {
+            $avatarRequest->setCachedAvatarUrl(Cache::get($cachedAvatarKey))
+                            ->setAvatarUrl(Cache::get($cachedAvatarKey));
+        }
+    }
+
+    return $next($avatarRequest);
+}
+```
+
+---
+# ServeCachedAvatar Pipeline
+
+```bash
+php artisan make:avatar-pipeline ServeLiveAvatar
+```
+
+---
+## Implementasi ServeLiveAvatar Pipe
+
+```php
+
+/**
+ * Handle the AvatarRequest instance.
+ *
+ * @param  AvatarRequest $avatarRequest
+ * @param  Closure       $next
+ * @return Closure
+ */
+public function handle(AvatarRequest $avatarRequest, Closure $next) {
+
+    if( ! $avatarRequest->getCachedAvatarUrl() )
+        $avatarRequest->setAvatarUrl(
+            $avatarRequest->getProvider()->getAvatarUrl($avatarRequest->getUsername())
+        );
+
+    return $next($avatarRequest);
+}
+```
+---
+
+# CacheAvatarRequest Pipeline
+
+```bash
+php artisan make:avatar-pipeline CacheAvatarRequest
+```
+---
+## Implementasi CacheAvatarRequest Pipe
+
+```php
+public function handle(AvatarRequest $avatarRequest, Closure $next) {
+
+    $cachedAvatarKey = md5(
+        sprintf("%s.%s", get_class($avatarRequest->getProvider()), $avatarRequest->getUsername())
+    );
+
+    if( ! $avatarRequest->isAvatarUrlCached() ) {
+        Cache::put($cachedAvatarKey, $avatarRequest->getAvatarUrl());
+    }
+
+    return $next($avatarRequest);
+}
+```
+
+---
+
+# Refactor Avatar Facade!
+
+Setelah implementasi Pipeline, kita perlu refactor Avatar Facade nya untuk pake _Pipeline_ yang udah dibikin.
+
+---
+
+# 1. Import Class yang di perlukan.
+
+```php{7,11}
+
+// app/Services/AvatarDriver/Facades/Avatar.php
+
+<?php
+
+namespace App\Services\AvatarDriver\Facades;
+.....
++ use App\Contracts\AvatarRequest;
++ use App\Services\AvatarDriver\Pipeline\CacheAvatarRequest;
++ use App\Services\AvatarDriver\Pipeline\ServeCachedAvatar;
++ use App\Services\AvatarDriver\Pipeline\ServeLiveAvatar;
++ use Illuminate\Pipeline\Pipeline;
+
+class Avatar {
+
+.....
+```
+
+---
+
+# 2. Update getAvatarUrl()
+
+Delete provider accessor.
+
+```php{3,3}
+// app/Services/AvatarDriver/Facades/Avatar.php
+
+- return $this->provider->getAvatarUrl($username);
+```
+
+---
+
+Replace dengan Pipeline
+```php{2,3|8,10}
+$avatarRequest  = app(AvatarRequest::class)
+                    ->setProvider($this->provider)
+                    ->setUsername($username);
+
+$avatarPipeline = app(Pipeline::class)
+                    ->send($avatarRequest)
+                    ->through([
+                        ServeCachedAvatar::class,
+                        ServeLiveAvatar::class,
+                        CacheAvatarRequest::class,
+                    ])
+                    ->thenReturn();
+
+return $avatarPipeline->getAvatarUrl();
+```
+
+---
+
+## Sebelum di Cache
+
+![](/images/before-cached.png)
+
+---
+
+## Setelah di Cache
+
+![](/images/after-cached.png)
+
+---
+
+# Jadi Kenapa pakai Pipeline?
+
+# 🤔
+
+---
+
+# Yok Lanjot lagee~
+
+
+
+</SlidePage>

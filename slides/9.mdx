@@ -1,0 +1,94 @@
+<SlidePage>
+
+# Heroku Deployment  🚀
+
+Untuk deploy ke Heroku, kalian perlu register dulu di https://heroku.com
+
+---
+
+# Initialize Git Repository
+
+Heroku pake git untuk distribution nya, Jadi kita bakal initialize git repository di Project avatar-api nya.
+
+```bash
+git init
+```
+
+---
+
+# Buat Heroku Procfile
+
+```bash
+echo "web: vendor/bin/heroku-php-apache2 public/" > Procfile
+```
+
+---
+
+# Commit Procfile-nya
+
+```bash
+git add Procfile
+git commit -m "Add Heroku Procfile"
+```
+
+---
+# Buat App di Heroku
+
+```bash
+heroku app:create array-id-avatar-api
+```
+
+![](/images/heroku-create-app.png)
+
+---
+
+# Remote Origin dari Heroku
+
+By default, Heroku bakalan nambahin git origin ke Server nya Heroku, bisa di cek pakai
+```bash
+git remote -v
+```
+
+![](/images/heroku-remote-origin.png)
+
+---
+
+# Setup Environment Variables
+
+```bash
+heroku config:set APP_KEY=$(php artisan --no-ansi key:generate --show)
+heroku config:set TWITTER_BEARER_TOKEN="AAAAAAAAAAAAAAAAAAAAAHLVKgEAAAAA88B....."
+```
+
+---
+# Deploy!
+
+```bash
+git push heroku master
+```
+![](/images/heroku-deploy.png)
+
+---
+
+# Test Deployment!
+
+https://array-id-avatar-api.herokuapp.com/avatar?username=itskodinger&provider=github
+
+---
+
+## Sebelum di Cache
+
+![](/images/before-cache-heroku.png)
+
+---
+
+## Setelah di Cache
+
+![](/images/after-cache-heroku.png)
+
+---
+
+# The End!
+![](https://i.giphy.com/media/3oFzmqN1xHwaEXGl7q/giphy.webp)
+
+</SlidePage>

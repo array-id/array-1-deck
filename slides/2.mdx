@@ -1,58 +1,67 @@
 <SlidePage>
 
-# Elevate authoring with components
+## Laravel Service Container
 
-Using MDX you can use components alongside your Markdown, like React or Web Components.
+Di projek kali ini, kita bakalan banyak pake API dari Service Container.
 
----
-
-<button 
-    style={{
-        backgroundColor:"transparent", 
-        color: "#FFF", 
-        border: "3px solid #FFF", 
-        borderRadius: "6px", 
-        padding: "1.5em 2em",
-        fontSize: "1em"
-    }}
->Button with JSX</button>
-
----
-
-## Source of the last slide
-
-```jsx
-<button 
-    style={{
-        backgroundColor:"transparent", 
-        color: "#FFF", 
-        border: "3px solid #FFF", 
-        borderRadius: "6px", 
-        padding: "1.5em 2em",
-        fontSize: "1em"
-    }}
->Button with JSX</button>
+```php
+$this->app->bind('jarvis, apakah gue ganteng?', function() {
+  return 'Tentu saja bosqu!';
+});
 ```
 
 ---
 
-Use other components by adding to `<MDXProvider>`
+## Binding & Resolve
 
-```jsx
-const mdComponents = {
-  h1: (props) => <Heading as="h1" {...props} />,
-}
-```
+Binding adalah proses untuk me-registerkan `instance` ke service container.
 
-[Check out the docs here](https://mdxjs.com/getting-started#mdxprovider)
+Resolve adalah proses untuk mengambil `instance` dari service container.
 
 ---
 
-## Having issues?
+## Apa maksudnya instance?
 
-- **Check your syntax.** *JSX doesn't like things like unclosed tags.* 
-- **Clear the cache and restart the server.** *MDX is like that sometimes.*
-- **Check the MDX docs**. *It's next level stuff.*
+Context Instance adalah, apa aja yang dimasukan ke dalam service container itu dinamakan instance.
 
+```php
+$this->app->bind('twitter', TwitterDriver::class);
+
+$this->app->bind('mongodb', function() {
+  return new MongoDriver();
+});
+```
+
+---
+
+## Binding
+
+Me-registerkan instance TwitterDriver dengan key twitter, ke dalam Service Container adalah proses binding.
+
+```php
+$this->app->bind('twitter', TwitterDriver::class);
+```
+
+---
+
+## Resolve/Resolving
+
+Mengambil instance dengan key twitter, dari dalam Service Container yang telah di registerkan sebelumnya.
+
+---
+
+```php
+# Cara 1
+$this->app->make('twitter');
+
+# Cara 2, App facade
+App::make('twitter');
+
+# Cara 3, menggunakan helper app()
+app('twitter');
+
+# Cara 4, memanfaatkan ArrayAccess
+app()['twitter'];
+```
 
 </SlidePage>

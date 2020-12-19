@@ -10,15 +10,20 @@
     "start": "next start"
   },
   "dependencies": {
+    "@deckdeckgo/highlight-code": "^2.2.2",
     "@mdx-js/loader": "^1.5.8",
     "@next/mdx": "^9.3.4",
+    "@tailwindcss/postcss7-compat": "^2.0.2",
+    "autoprefixer": "^9.8.6",
     "framer-motion": "^1.10.3",
     "next": "9.3.4",
+    "postcss": "^7.0.35",
     "react": "16.13.1",
     "react-dom": "16.13.1",
     "react-swipeable": "^5.5.1",
     "react-syntax-highlighter": "^12.2.1",
-    "styled-components": "^5.1.0"
+    "styled-components": "^5.1.0",
+    "tailwindcss": "npm:@tailwindcss/postcss7-compat@^2.0.2"
   },
   "devDependencies": {
     "babel-eslint": "^10.1.0",

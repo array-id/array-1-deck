@@ -1,9 +1,9 @@
 export const siteConfig = {
-  name: `@whoisryosuke`,
-  title: `NextJS MDX Deck`,
-  date: `April 22, 2020`,
+  name: `@rizalfakhri`,
+  title: `Deep Dive Laravel! Registry, Pipeline & Facade.`,
+  date: `December 15, 2020`,
   author: {
-    url: `https://twitter.com/whoisryosuke`,
+    url: `https://twitter.com/rizal__fakhri`,
   },
 }
 

@@ -19,6 +19,10 @@ const SlideshowPage = ({ totalSlidePages, currentSlide, filename }) => {
           href="https://fonts.googleapis.com/css2?family=Poppins:wght@800&family=Roboto:ital,wght@0,400;0,700;1,400&display=swap"
           rel="stylesheet"
         />
+        <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;700&display=swap" rel="stylesheet" />
+        <link href="https://fonts.googleapis.com/css2?family=Inconsolata:wght@400;700&family=Rubik:wght@400;500;600;700&display=swap" rel="stylesheet" />
+        <link href="https://fonts.googleapis.com/css?family=Press+Start+2P|IBM+Plex+Mono|Share+Tech+Mono|Fira+Code&amp;display=swap" rel="stylesheet" />
+
       </Head>
       <Header
         name={siteConfig.name}

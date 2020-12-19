@@ -19,9 +19,185 @@ const GlobalStyle = createGlobalStyle`
     --text: #FAFAFA;
     --base: 1.5rem;
     --code: 1rem;
-    --heading-font-family: "Poppins";
+    --heading-font-family: "Rubik";
     --heading-font-weight: 800;
+    --inlineCode-bg: hsl(222, 14%, 25%);
+    --inlineCode-text: #e6e6e6;
+    --deckgo-highlight-code-font-family: 'Fira Code';
+    --deckgo-highlight-code-font-size: 25px;
   }
+
+  /**
+  * Based on copypasta from Remy Bach and Sarah Drasner
+  */
+
+  code[class*='language-'],
+  pre[class*='language-'] {
+      color: white;
+      background: none;
+      font-family: Fira Code, Consolas, Menlo, Monaco, source-code-pro, Courier New, monospace;
+      font-feature-settings: normal;
+      text-align: left;
+      white-space: pre;
+      word-spacing: normal;
+      word-break: normal;
+      word-wrap: normal;
+      line-height: 1.5;
+      margin-bottom: 0;
+      -moz-tab-size: 4;
+      -o-tab-size: 4;
+      tab-size: 4;
+      -webkit-hyphens: none;
+      -moz-hyphens: none;
+      -ms-hyphens: none;
+      hyphens: none;
+      box-shadow: none;
+      font-size: 15px;
+  }
+
+
+  /* Code blocks */
+
+  pre[class*='language-'] {
+      overflow: auto;
+      padding: 1.3125rem;
+  }
+
+  pre[class*='language-']::-moz-selection {
+      /* Firefox */
+      background: hsl(207, 4%, 16%);
+  }
+
+  pre[class*='language-']::selection {
+      /* Safari */
+      background: hsl(207, 4%, 16%);
+  }
+
+
+  /* Text Selection colour */
+
+  pre[class*='language-']::-moz-selection,
+  pre[class*='language-'] ::-moz-selection {
+      text-shadow: none;
+      background: hsla(0, 0%, 100%, 0.15);
+  }
+
+  pre[class*='language-']::selection,
+  pre[class*='language-'] ::selection {
+      text-shadow: none;
+      background: hsla(0, 0%, 100%, 0.15);
+  }
+
+
+  .token.attr-name {
+      color: rgb(173, 219, 103);
+      font-style: italic;
+  }
+
+  .token.comment {
+      color: rgb(128, 147, 147);
+  }
+
+  .token.string,
+  .token.url {
+      color: rgb(173, 219, 103);
+  }
+
+  .token.variable {
+      color: rgb(214, 222, 235);
+  }
+
+  .token.number {
+      color: rgb(247, 140, 108);
+  }
+
+  .token.builtin,
+  .token.char,
+  .token.constant,
+  .token.function {
+      color: rgb(130, 170, 255);
+  }
+
+  .token.punctuation {
+      color: rgb(199, 146, 234);
+  }
+
+  .token.selector,
+  .token.doctype {
+      color: rgb(199, 146, 234);
+      font-style: 'italic';
+  }
+
+  .token.class-name {
+      color: rgb(255, 203, 139);
+  }
+
+  .token.tag,
+  .token.operator,
+  .token.keyword {
+      color: #ffa7c4;
+  }
+
+  .token.boolean {
+      color: rgb(255, 88, 116);
+  }
+
+  .token.property {
+      color: rgb(128, 203, 196);
+  }
+
+  .token.namespace {
+      color: rgb(178, 204, 214);
+  }
+
+  pre[data-line] {
+      padding: 1em 0 1em 3em;
+      position: relative;
+  }
+
+  @media only screen and (max-width: 600px) {
+      .gatsby-highlight {
+          border-radius: 0px !important;
+          margin-left: -2rem !important;
+          margin-right: -2rem !important;
+          border-radius: 0px;
+      }
+  }
+
+  .gatsby-highlight-code-line {
+      background-color: hsla(207, 95%, 15%, 1);
+      display: block;
+      margin-right: -1.3125rem;
+      margin-left: -1.3125rem;
+      padding-right: 1em;
+      padding-left: 1.25em;
+      border-left: 0.25em solid #ffa7c4;
+  }
+
+  .gatsby-highlight {
+      margin-bottom: 1.75rem;
+      margin-left: -1.3125rem;
+      margin-right: -1.3125rem;
+      border-radius: 10px;
+      background: #011627;
+      -webkit-overflow-scrolling: touch;
+      overflow: auto;
+      border-radius: 10px;
+  }
+
+  @media (max-width: 672px) {
+      .gatsby-highlight {
+          border-radius: 0;
+      }
+  }
+
+  .gatsby-highlight pre[class*='language-'] {
+      float: left;
+      min-width: 100%;
+  }
+
+
+  /* TYPOGRAPHY THINGS*/
 
   @media (max-width: 600px) {
     :root {
@@ -41,7 +217,7 @@ const GlobalStyle = createGlobalStyle`
     -webkit-font-smoothing: antialiased;
     font-feature-settings: 'calt', 'liga', 'hist', 'onum', 'pnum';
 
-    overflow: auto;
+    overflow: hidden;
 
     width: 100%;
     height: 100%;
@@ -56,13 +232,6 @@ const GlobalStyle = createGlobalStyle`
     display: flex;
     overflow: hidden;
     justify-content: center;
-    align-items: center;
-
-    width: 100vw;
-    height: 100vh;
-    padding: 1rem;
-
-    text-align: center;
 
     -webkit-overflow-scrolling: touch;
   }
@@ -272,6 +441,14 @@ export default function SlidePage({ children }) {
         return prevState - 1
       })
     }
+
+    let highlighter = document.getElementsByTagName('deckgo-highlight-code');
+
+    if( highlighter && highlighter.length > 0 ) {
+
+        highlighter[0].load()
+    }
+
   }
 
   useEventListener('keydown', navigate)

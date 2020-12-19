@@ -1,0 +1,316 @@
+<SlidePage>
+
+## Registry
+
+In a nutshell, Definisi Registry cuman array yang persistent.
+
+```php
+DriverRegistry::all(); // return => []
+```
+
+---
+
+## 3 Method utama Registry
+
+```php
+// Register
+register($key, $instance, $override = false)
+
+// Check existence
+has($key)
+
+// Get instance
+get($key)
+```
+
+---
+
+## Cara bikin Registry gimana?
+
+Kita perlu
+
+1. Service Provider
+1. Registry
+1. Interface!
+
+---
+
+## 1. Bikin Service Provider
+
+```bash
+php artisan make:provider AvatarDriverServiceProvider
+```
+
+---
+
+## 2. Bikin Registry!
+
+Bikin folder `Registries` di `app`
+
+```bash
+mkdir app/Registries
+```
+
+---
+
+Buat class AvatarDriverRegistry.php di app/Registries
+
+```php
+<?php
+
+class AvatarDriverRegistry {
+
+}
+```
+---
+
+Tambahkan 3 method utama Registry!
+
+```php
+class AvatarDriverRegistry {
+
+    public function register($key, $instance, $override = false) {}
+    public function has($key) {}
+    public function get($key) {}
+
+}
+```
+
+---
+
+## 3. Interface!
+
+Interface bertugas untuk men-standardize instance yang akan di register-kan ke registry.
+
+```php
+<?php
+
+interface AvatarDriver {
+    public function getAvatarUrl($username);
+}
+```
+
+---
+
+## Bikin Interface
+
+Buat folder `Contracts` di `app`.
+
+```bash
+mkdir app/Contracts
+```
+---
+
+app/Contracts/AvatarDriver.php
+
+```php{3,3}
+<?php
+
++ namespace App\Contracts;
+
+interface AvatarDriver {
+    public function getAvatarUrl($username);
+}
+```
+---
+
+app/Contracts/AvatarDriver.php
+
+```php{7,12}
+<?php
+
+namespace App\Contracts;
+
+interface AvatarDriver {
+
+    /**
+     * Retrieve avatar url from provider.
+     *
+     * @param  string $username
+     * @return string
+     */
+    public function getAvatarUrl($username);
+}
+```
+
+---
+
+## Tambahin Contract-nya ke Registry
+
+
+```php{3,3|5,5|9,9}
+<?php
+
++ namespace App\Registries;
+
++ use App\Contracts\AvatarDriver;
+
+class AvatarDriverRegistry {
+
+    public function register($key, AvatarDriver $driver, $override = false) {}
+    ...
+}
+```
+
+---
+
+## Method register()
+
+```php
+...
+class AvatarDriverRegistry {
+
+    /**
+     * Registered AvatarDriver instances.
+     *
+     * @var array $drivers
+     */
+     protected $drivers = [];
+
+    public function register($key, AvatarDriver $driver, $override = false) {}
+
+...
+```
+
+---
+
+```php
+/**
+ * Register new AvatarDriver instance.
+ *
+ * @param  string       $key
+ * @param  AvatarDriver $driver
+ * @param  bool         $override
+ * @return void
+ */
+public function register($key, AvatarDriver $driver, $override = false) {
+    if( $this->has($key) ) {
+        $this->drivers[$key] = ($override) ? $driver : $this->get($key);
+    }
+    else
+    {
+        $this->drivers[$key] = $driver;
+    }
+}
+...
+```
+
+---
+
+## Method has()
+
+```php
+/**
+ * Determine if AvatarDriver with provided key exists.
+ *
+ * @param  string $key
+ * @return bool
+ */
+public function has($key) {
+    return (bool) isset($this->drivers[$key]);
+}
+
+...
+```
+---
+
+## Method get()
+
+```php
+/**
+ * Get AvatarDriver from the Registry.
+ *
+ * @param  string $key
+ * @return AvatarDriver|null
+ */
+public function get($key) {
+    if( $this->has($key) ) return $this->drivers[$key];
+}
+
+...
+```
+
+---
+
+## Method all()
+
+```php
+/**
+ * Get All registered AvatarDriver instances.
+ *
+ * @return array
+ */
+public function all() {
+    return $this->drivers;
+}
+
+...
+```
+
+---
+
+## Me-Register Registry nya ke ServiceProvider
+
+```php{4,4|15,15}
+<?php
+...
+
+use App\Registries\AvatarDriverRegistry;
+
+class AvatarDriverServiceProvider extends ServiceProvider
+{
+    /**
+     * Register services.
+     *
+     * @return void
+     */
+    public function register()
+    {
+        $this->app->singleton(AvatarDriverRegistry::class);
+    }
+}
+```
+
+---
+
+## Provider Loader
+
+```php
+// config/app.php
+
+'providers' => [
+    ...
+    App\Providers\AvatarDriverServiceProvider::class,
+]
+
+```
+
+---
+
+## Tes Registry-nya
+
+```bash
+$ php artisan tinker
+
+Psy Shell v0.10.5 (PHP 7.4.12 — cli) by Justin Hileman
+>>> use App\Registries\AvatarDriverRegistry
+>>> app(AvatarDriverRegistry::class)
+
+=> App\Registries\AvatarDriverRegistry {#3326} // Object
+```
+
+---
+
+## Registry Berhasil di bikin!
+
+Kalau result dari app(AvatarDriverRegistry::class) adalah object, Berarti Registry nya udah berhasil dibuat.
+
+Ada beberapa error yang mungkin terjadi kalo Registry nya gagal dibuat, Misalnya Class is not instantiable, biasanya karena ada namespace yang salah.
+
+Tapi Registry nya masih kosong.
+
+---
+
+# Yok Lanjut~
+
+</SlidePage>

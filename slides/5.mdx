@@ -1,0 +1,251 @@
+<SlidePage>
+
+# Implementasi Driver!
+
+```php
+
+/**
+ * Retrieve avatar url from provider.
+ *
+ * @param  string $username
+ * @return string
+ */
+public function getAvatarUrl($username) {
+
+    $userLookupResponse = $this->client->get(
+        sprintf('users/by/username/%s?user.fields=profile_image_url', $username)
+    );
+
+    $parsedUserLookupResponse = json_decode($lookupResponse->getBody()->getContents(), true);
+
+    return Arr::get($parsedUserLookupResponse, 'data.profile_image_url');
+}
+```
+
+---
+
+# Implementasi 3 Driver!
+
+1. Twitter Driver
+1. Github Driver
+1. Gravatar Driver
+
+---
+
+## 1. TwitterDriver
+
+```php
+// app/Services/AvatarDriver/TwitterDriver.php
+
+/**
+ * Twitter API Base URI.
+ *
+ * @var string $twitterBaseUri
+ */
+protected $twitterBaseUri = 'https://api.twitter.com/2/';
+
+/**
+ * The Client instance.
+ *
+ * @var Client $client
+ */
+protected $client;
+
+```
+---
+
+```php{13,16}
+// app/Services/AvatarDriver/TwitterDriver.php
+
+.....
+
+/**
+ * Build the driver instance.
+ *
+ * @return void
+ */
+public function __construct()
+{
+    $this->client = new Client([
+        'base_uri' => $this->twitterBaseUri
+        'headers' => [
+            'Authorization' => 'Bearer ' . config('services.twitter.bearer_token')
+        ]
+    ]);
+}
+
+
+```
+
+---
+
+```php
+// config/services.php
+
+.....
+
+'twitter' => [
+    'bearer_token' => env('TWITTER_BEARER_TOKEN')
+]
+
+
+// .env
+.....
+TWITTER_BEARER_TOKEN='AAAAAAAAAAAAAAAAAAAAAHLVKgEAAAAA88B.....'
+
+```
+
+---
+
+```php{5,7|18,18}
+// app/Services/AvatarDriver/TwitterDriver.php
+
+public function getAvatarUrl($username) {
+
+    $userLookupResponse = $this->client->get(
+        sprintf('users/by/username/%s?user.fields=profile_image_url', $username)
+    );
+
+    $parsedUserLookupResponse = json_decode($lookupResponse->getBody()->getContents(), true);
+
+    // [
+    //    'data' => [
+    //        .....
+    //        'profile_image_url' => 'https://pbs.twimg.com/.....'
+    //    ]
+    // ]
+
+    return Arr::get($parsedUserLookupResponse, 'data.profile_image_url');
+}
+```
+
+---
+
+## 2. GithubDriver
+
+```bash
+php artisan make:avatar-driver GithubDriver
+```
+---
+
+```php
+// app/Services/AvatarDriver/GithubDriver.php
+
+/**
+ * Github API Base URI.
+ *
+ * @var string $githubBaseUri
+ */
+protected $githubBaseUri = 'https://api.github.com/';
+
+/**
+ * The Client instance.
+ *
+ * @var Client $client
+ */
+protected $client;
+
+```
+
+---
+
+```php
+// app/Services/AvatarDriver/GithubDriver.php
+
+/**
+ * Build the driver instance.
+ *
+ * @return void
+ */
+public function __construct()
+{
+    $this->client = new Client([
+        'base_uri' => $this->githubBaseUri
+    ]);
+}
+```
+
+---
+
+```php
+
+// app/Services/AvatarDriver/GithubDriver.php
+
+/**
+ * Retrieve avatar url from provider.
+ *
+ * @param  string $username
+ * @return string
+ */
+public function getAvatarUrl($username) {
+
+    $userLookupResponse = $this->client->get(
+        sprintf('users/%s', $username)
+    );
+
+    $parsedUserLookupResponse = json_decode($lookupResponse->getBody()->getContents(), true);
+
+    return Arr::get($parsedUserLookupResponse, 'avatar_url');
+}
+```
+
+---
+
+## 3. Gravatar Driver
+
+```bash
+php artisan make:avatar-driver GravatarDriver
+```
+---
+
+```php
+// app/Services/AvatarDriver/GravatarDriver.php
+
+/**
+ * Gravatar URL.
+ *
+ * @var string $gravatarUrl
+ */
+protected $gravatarUrl = 'https://www.gravatar.com/avatar/';
+
+```
+---
+
+```php
+
+// app/Services/AvatarDriver/GravatarDriver.php
+
+/**
+ * Retrieve avatar url from provider.
+ *
+ * @param  string $username
+ * @return string
+ */
+public function getAvatarUrl($username) {
+    return sprintf("%s/%s", $this->gravatarUrl, md5($username));
+}
+```
+---
+
+## Update Driver Discovery
+
+```php{7,8}
+// config/avatar-driver.php
+
+<?php
+
+return [
+    'twitter'  => App\Services\AvatarDriver\TwitterDriver::class,
+    'github'   => App\Services\AvatarDriver\GithubDriver::class,
+    'gravatar' => App\Services\AvatarDriver\GravatarDriver::class,
+];
+
+```
+
+---
+
+# Driver Discovered!
+
+![](/images/driver-discovered.png)
+
+</SlidePage>

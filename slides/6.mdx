@@ -1,0 +1,97 @@
+<SlidePage>
+
+# REST API Endpoint
+
+```http
+// curl -v 'http://avatar-api.test/avatar?username=itskodinger'
+
+GET /avatar?username=itskodinger HTTP/1.1
+Host: avatar-api.test
+User-Agent: curl/7.64.1
+Accept: */*
+
+HTTP/1.1 200 OK
+.....
+
+{
+    "avatar_url": "https://pbs.twimg.com/profile_images/1194333351026417664/jywV-HaJ_normal.jpg",
+    "provider": "twitter"
+}
+```
+---
+
+# Invokable Controller
+
+```bash
+php artisan make:controller GetAvatarController --invokable
+```
+
+---
+
+## Dependency Injection
+
+```php{14,17}
+/**
+ * The AvatarDriverRegistry instance.
+ *
+ * @var  AvatarDriverRegistry $registry
+ */
+protected $registry;
+
+/**
+ * Build the controller instance.
+ *
+ * @param  AvatarDriverRegistry $registry
+ * @return void
+ */
+public function __construct(AvatarDriverRegistry $registry)
+{
+    $this->registry = $registry;
+}
+```
+
+---
+
+## __invoke method
+
+```php
+public function __invoke(Request $request)
+{
+    if( ! $request->has('username') )
+        return response()->json(['message' => 'Please Provide Username.'], 400, [], JSON_PRETTY_PRINT);
+
+    $provider = $request->provider;
+
+    if( ! $this->registry->has($provider) )
+        $provider = Arr::random(array_keys($this->registry->all()));
+
+    $avatarUrl = $this->registry->get($provider)->getAvatarUrl($request->username);
+
+    return response()->json([
+        'avatar_url' => $avatarUrl,
+        'provider'   => $provider
+    ], 200, [], JSON_PRETTY_PRINT);
+}
+```
+
+---
+
+## Tambah Route-nya
+
+```php
+Route::get('/avatar', GetAvatarController::class);
+```
+
+---
+
+## Test Endpoint-nya
+
+![](/images/test-endpoint.png)
+
+---
+
+# Masalahnya!
+
+Avatar-nya belum reusable! Masih ter-isolate di 1 Endpoint & 1 Controller aja.
+
+</SlidePage>
