@@ -1,6 +1,6 @@
-@import "tailwindcss/base";
-@import "tailwindcss/components";
-@import "tailwindcss/utilities";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
 h1, h2, h3, h4, h5 {
   font-family: "Rubik";
@@ -39,5 +39,5 @@ h1, h2, h3, h4, h5 {
 }
 
 p {
-  @apply 2xl:text-2xl md:text-xl text-lg leading-relaxed w-11/12 font-light mt-4 font-mono;
+  @apply w-11/12 mt-4 font-mono text-lg font-light leading-relaxed 2xl:text-2xl md:text-xl;
 }
