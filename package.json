@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "build:tailwind": "NODE_ENV=production npx tailwindcss-cli@latest build ./styles/globals.css -o ./public/tailwind.css",
+    "build:tailwind": "npx tailwindcss-cli@latest build ./styles/style.css -o ./styles/globals.css",
     "format": "prettier --write '**/*.{js,jsx}'",
     "start": "next start",
     "export": "next export"
